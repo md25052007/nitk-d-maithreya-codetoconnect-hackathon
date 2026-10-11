@@ -6,7 +6,7 @@
 
 **College / Campus:** National Institute of Technology Karnataka (NITK), Surathkal
 
-**Demo Video Link:** _[add the unlisted YouTube link here]_
+**Demo Video Link:** (https://youtu.be/hd8jhISrU_I?si=hjp1kH-446U__FYu)
 
 **Slide Deck Link (if hosted externally):** [`docs/presentation.pdf`](docs/presentation.pdf) (in this repo)
 
