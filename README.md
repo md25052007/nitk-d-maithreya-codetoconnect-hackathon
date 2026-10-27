@@ -32,8 +32,48 @@ Signals are linked to entities: a company via its cashtag or name, a sector via 
 A **Streamlit dashboard** ties it together. You can analyse any headline live, replay the historical stream in "real time", watch index weights change over time, and see portfolio value before and after a stress event.
 
 ## 2. Architecture & Tech Stack
+```mermaid
+flowchart LR
+    subgraph SRC["1. Data sources"]
+        direction TB
+        NEWS["News feed<br/>Reddit r/worldnews<br/>20,485 headlines"]
+        TW["Social media<br/>StockNet tweets<br/>59,777 tweets"]
+        LIVE["Live connectors<br/>Google News RSS, Reddit"]
+    end
 
-![Architecture](docs/architecture.png)
+    subgraph ING["2. Ingestion"]
+        direction TB
+        ADP["Source adapters<br/>common Document schema"] --> MRG["Chronological merge<br/>replay or live polling"]
+    end
+
+    subgraph ENG["3. AI/NLP Risk Engine"]
+        direction TB
+        CLN["Text cleaning"] --> ENT["Entity linking<br/>ticker / sector / MARKET"]
+        ENT --> EVT["Event classifier<br/>rules + weak-supervised LR"]
+        EVT --> SEN["Sentiment -1 to +1<br/>TF-IDF LR + finance lexicon"]
+        SEN --> IMP["Impact score 1 to 10<br/>explainable factors"]
+    end
+
+    STORE[("Signal store<br/>JSONL + SQLite<br/>daily aggregates")]
+
+    subgraph OUT["4. Consumers"]
+        direction TB
+        API["FastAPI<br/>/signals /analyze /stream"]
+        MA["Module A<br/>Index rebalancer"]
+        MB["Module B<br/>Stress tester"]
+        DASH["Streamlit dashboard<br/>weights over time,<br/>value before / after stress"]
+    end
+
+    PX[("Daily prices<br/>20 stocks + DJIA")]
+    PF[("Synthetic banking book<br/>203 trades, $8.1bn")]
+
+    SRC --> ING
+    ING --> ENG
+    ENG -->|RiskSignal JSON| STORE
+    STORE --> OUT
+    PX -.->|back-test| MA
+    PF -.->|portfolio| MB
+```
 
 **Data flow:** sources → ingestion adapters (common `Document` schema, chronological merge, replay or live polling) → NLP engine (cleaning → entity linking → event classification → sentiment → impact) → signal store → API, Module A, Module B → dashboard.
 
